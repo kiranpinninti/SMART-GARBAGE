@@ -7,16 +7,28 @@ export function useBins() {
 }
 
 const defaultBins = [
-  { id: 1, name: 'Block A Entrance', location: 'North Wing', level: 25, status: 'Low', battery: 85, signal: 'Strong' },
-  { id: 2, name: 'Canteen Area', location: 'Food Court', level: 60, status: 'Medium', battery: 92, signal: 'Medium' },
-  { id: 3, name: 'Library', location: 'Quiet Zone', level: 40, status: 'Low', battery: 45, signal: 'Weak' },
-  { id: 4, name: 'Sports Complex', location: 'Gym', level: 15, status: 'Low', battery: 98, signal: 'Strong' }
+  { id: 1, name: 'Main Entrance', block: 'Main Block', floor: 'Ground Floor', location: 'Gate 1', level: 25, status: 'Low', battery: 85, signal: 'Strong', lat: 17.4455, lng: 78.3499, lastUpdated: Date.now() },
+  { id: 2, name: 'Admin Office', block: 'Main Block', floor: '1st Floor', location: 'Corridor A', level: 60, status: 'Medium', battery: 92, signal: 'Medium', lat: 17.4458, lng: 78.3495, lastUpdated: Date.now() },
+  { id: 3, name: 'Labs Wing', block: 'CSE Block', floor: '2nd Floor', location: 'Lab 204', level: 40, status: 'Low', battery: 45, signal: 'Weak', lat: 17.4465, lng: 78.3485, lastUpdated: Date.now() },
+  { id: 4, name: 'Staff Room', block: 'CSE Block', floor: '1st Floor', location: 'Hallway', level: 85, status: 'Full', battery: 90, signal: 'Strong', lat: 17.4467, lng: 78.3482, lastUpdated: Date.now() },
+  { id: 5, name: 'Workshop A', block: 'Mech Block', floor: 'Ground Floor', location: 'Heavy Machinery', level: 15, status: 'Low', battery: 98, signal: 'Strong', lat: 17.4440, lng: 78.3510, lastUpdated: Date.now() },
+  { id: 6, name: 'Reading Room', block: 'Library', floor: '2nd Floor', location: 'Quiet Zone', level: 75, status: 'Medium', battery: 60, signal: 'Strong', lat: 17.4450, lng: 78.3480, lastUpdated: Date.now() },
+  { id: 7, name: 'Stadium Entrance', block: 'Playground', floor: 'Outdoors', location: 'Gate A', level: 30, status: 'Low', battery: 80, signal: 'Medium', lat: 17.4435, lng: 78.3470, lastUpdated: Date.now() },
+  { id: 8, name: 'Main Dining', block: 'Canteen', floor: 'Ground Floor', location: 'Food Court', level: 50, status: 'Medium', battery: 88, signal: 'Strong', lat: 17.4460, lng: 78.3505, lastUpdated: Date.now() }
 ];
 
 export function BinProvider({ children }) {
   const [bins, setBins] = useState(() => {
     const saved = localStorage.getItem('smartBins');
-    return saved ? JSON.parse(saved) : defaultBins;
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Migration: if the old structure exists without blocks, override with defaultBins
+      if (parsed.length > 0 && !parsed[0].block) {
+        return defaultBins;
+      }
+      return parsed;
+    }
+    return defaultBins;
   });
 
   const [alerts, setAlerts] = useState(() => {
@@ -74,7 +86,7 @@ export function BinProvider({ children }) {
             if (bin.level >= 80) {
               if (Math.random() > 0.7) { // 30% chance per tick once full
                 addAlert('info', 'Bin Cleaned', `The bin at ${bin.location} has been cleared and is ready for use.`);
-                return { ...bin, level: 0, status: 'Low' };
+                return { ...bin, level: 0, status: 'Low', lastUpdated: Date.now() };
               }
             }
 
@@ -87,7 +99,7 @@ export function BinProvider({ children }) {
             if (newLevel >= 80) newStatus = 'Full';
             else if (newLevel >= 50) newStatus = 'Medium';
             
-            const updatedBin = { ...bin, level: newLevel, status: newStatus };
+            const updatedBin = { ...bin, level: newLevel, status: newStatus, lastUpdated: Date.now() };
 
             // Notification Trigger
             if (newLevel >= 80 && bin.level < 80) {
